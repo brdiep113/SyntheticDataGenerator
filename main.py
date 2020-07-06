@@ -1,32 +1,33 @@
-from utils.plot_functions import fill_scene, plot_sample_img, plot_ground_truth
+from utils.plot_functions import fill_scene, plot_sample_img
+from utils.clean_training import clean_json_labels, clean_json_points
 from Structure.Scene import Scene
 import json
 
-path_to_training_images = 'E:Images\Synthesized_Data\Training'
+path_to_training_images = 'E:Images\Synthesized_Data\Dataset_Sample\Image'
 path_to_training_truth = 'E:\Images\Synthesized_Data'
-path_to_training_json = 'C:/Users/Brian/PycharmProjects/SyntheticDataGenerator/json'
+path_to_training_json = 'C:/Users/Brian/PycharmProjects/SyntheticDataGenerator/json/training.json'
 
 path_to_validation_images = 'E:\Images\Synthesized_Data\Validation'
 path_to_validation_truth = ''
-path_to_validation_json = 'C:/Users/Brian/PycharmProjects/SyntheticDataGenerator/json'
+path_to_validation_json = 'C:/Users/Brian/PycharmProjects/SyntheticDataGenerator/json/validation.json'
 
 
 path_to_testing_images = 'E:\Images\Synthesized_Data\Testing'
 path_to_testing_truth = ''
-path_to_testing_json = 'C:/Users/Brian/PycharmProjects/SyntheticDataGenerator/json'
+path_to_testing_json = 'C:/Users/Brian/PycharmProjects/SyntheticDataGenerator/json/testing.json'
 
 training_json = []
 validation_json = []
 testing_json = []
 
-training_sample_size = 10
+training_sample_size = 100
 validation_sample_size = training_sample_size // 5
 testing_sample_size = training_sample_size // 5
 
 scene_size = (1024, 1024)
 
 for i in range(training_sample_size):
-    curr_scene_id = "img{0}".format(i)
+    curr_scene_id = "{0}".format(i)
     scene = Scene(scene_size, curr_scene_id)
     max_buildings = 24
     fill_scene(max_buildings, scene, training_json)
@@ -35,6 +36,9 @@ for i in range(training_sample_size):
 
 with open(path_to_training_json, 'w') as outfile:
     json.dump(training_json, outfile)
+
+clean_json_points(training_json, 'E:Images\Synthesized_Data\Dataset_Sample\Point_Location')
+clean_json_labels(training_json, 'E:Images\Synthesized_Data\Dataset_Sample\Coarse_Label')
 
 for i in range(validation_sample_size):
     curr_scene_id = "img{0}".format(i)

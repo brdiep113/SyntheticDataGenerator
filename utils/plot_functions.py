@@ -15,7 +15,7 @@ my_dpi = 128
 def plot_sample_img(scene, image_outpath, image_count):
     noise = np.random.normal(255. / 2, 255. / 10, SHAPE)
 
-    img = plt.figure(figsize=(1024 / my_dpi, 1024 / my_dpi), dpi=my_dpi, frameon=False)
+    img = plt.figure(figsize=(1330 / my_dpi, 1330 / my_dpi), dpi=my_dpi, frameon=False)
     axes = plt.gca()
     axes.imshow(noise, extent=[-1024, 1024, -1024, 1024])
     axes.set_xlim([0, 1024])
@@ -42,14 +42,8 @@ def plot_sample_img(scene, image_outpath, image_count):
         plt.grid(b=None)
         plt.box(False)
 
-    img.savefig(path.join(image_outpath, "image_{0}.png".format(image_count)), bbox_inches='tight', pad_inches=0)
+    img.savefig(path.join(image_outpath, "{0}.png".format(image_count)), bbox_inches='tight', pad_inches=0)
     plt.close()
-
-
-def get_octant(angle) -> int:
-    for i in range(8):
-        if i * (math.pi / 4) <= angle < (i + 1) * (math.pi / 4):
-            return i
 
 
 def fill_scene(max_shape_count: int, scene: Scene, json) -> None:
@@ -65,7 +59,7 @@ def fill_scene(max_shape_count: int, scene: Scene, json) -> None:
         h = random.uniform(60, 160)
         angle = random.uniform(0, 360)
         shape = Building(x, y, w, h, angle, generated)
-        offset = np.array((random.uniform(-w / 4, w / 4), random.uniform(-h / 4, h / 4)))
+        offset = np.array((random.uniform(0, w / 4), random.uniform(0, h / 4)))
         shape.offset_center(offset)
 
         if scene.has_overlap(shape):
@@ -107,12 +101,12 @@ def get_edges(data_dictionary):
 
     center = np.array((cx, cy))
 
-    for i in range(0, len(x_list)):
+    for i in range(0, len(x_list) - 1):
         anchor = np.array((x_list[i], y_list[i]))
         if i == 0:
-            to_prev = len(x_list) - 1
+            to_prev = len(x_list) - 2
             to_next = i + 1
-        elif i == len(x_list) - 1:
+        elif i == len(x_list) - 2:
             to_prev = i - 1
             to_next = 0
 
@@ -137,7 +131,7 @@ def get_center_edges(data_dictionary):
     center = np.array((cx, cy))
     edges = []
 
-    for i in range(len(x_list)):
+    for i in range(len(x_list) - 1):
         edge = np.array((x_list[i], y_list[i]) - center)
         edge = np.arctan2(edge[1], edge[0])
         edges.append(edge)
@@ -148,7 +142,7 @@ def get_center_edges(data_dictionary):
 def get_coarse_labels(data_dictionary):
     coarse_list = []
     for edge_list in data_dictionary['Edges']:
-        coarse_labels = [0] * 8
+        coarse_labels = [0] * 16
         for edge in edge_list:
             i = get_octant(edge)
             coarse_labels[i - 1] = 1
@@ -158,15 +152,41 @@ def get_coarse_labels(data_dictionary):
 
 
 def get_octant(angle) -> int:
-    i = 0
-    octant = [5, 6, 7, 8, 1, 2, 3, 4]
-    lower_bound = -math.pi
-    while lower_bound != math.pi:
-        if lower_bound <= angle <= lower_bound + math.pi / 4:
-            return octant[i]
-        i += 1
-        lower_bound += math.pi / 4
 
+    quadrant = math.pi / 8
+
+    if 0 <= angle < quadrant:
+        return 1
+    elif quadrant <= angle < 2 * quadrant:
+        return 2
+    elif 2 * quadrant <= angle < 3 * quadrant:
+        return 3
+    elif 3 * quadrant <= angle <= 4 * quadrant:
+        return 4
+    elif 4 * quadrant <= angle < 5 * quadrant:
+        return 5
+    elif 5 * quadrant <= angle < 6 * quadrant:
+        return 6
+    elif 6 * quadrant <= angle < 7 * quadrant:
+        return 7
+    elif 7 * quadrant <= angle < 8 * quadrant:
+        return 8
+    elif -quadrant <= angle < 0:
+        return 16
+    elif -2 * quadrant <= angle < -quadrant:
+        return 15
+    elif -3 * quadrant <= angle < -2 * quadrant:
+        return 14
+    elif -4 * quadrant <= angle < -3 * quadrant:
+        return 13
+    elif -5 * quadrant <= angle < -4 * quadrant:
+        return 12
+    elif -6 * quadrant <= angle < -5 * quadrant:
+        return 11
+    elif -7 * quadrant <= angle < -6 * quadrant:
+        return 10
+    else:
+        return 9
 
 def plot_ground_truth(scene, image_outpath, image_count):
 
