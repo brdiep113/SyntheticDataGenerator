@@ -34,7 +34,7 @@ class Building:
     def get_contour(self):
         w = self.w
         h = self.h
-        c = shapely.geometry.box(-w / 2.0 - 5, -h / 2.0 - 5, w / 2.0 + 5, h / 2.0 + 5)
+        c = shapely.geometry.box(-w / 2.0 - 2, -h / 2.0 - 2, w / 2.0 + 2, h / 2.0 + 2)
         rc = shapely.affinity.rotate(c, self.angle, origin='centroid')
         return shapely.affinity.translate(rc, self.cx, self.cy)
 

@@ -6,7 +6,9 @@ def clean_json_points(data_list, path_to_dir):
     for i in range(len(data_list)):
         point_info = {"X" : [], "Y" : []}
         for building in data_list[i]["img_info"]:
-            json_path = path_to_dir + "/{0}.json".format(i)
+            json_name = "{0}.json".format(i)
+            json_name = json_name.zfill(11)
+            json_path = path_to_dir + "/" + json_name
             point_info["X"].extend(building["building_info"]["X"])
             point_info["Y"].extend(building["building_info"]["Y"])
         with open(json_path, 'w') as outfile:
@@ -17,7 +19,9 @@ def clean_json_labels(data_list, path_to_dir):
     for i in range(len(data_list)):
         label_info = []
         for building in data_list[i]["img_info"]:
-            json_path = path_to_dir + "/{0}.json".format(i)
+            json_name = "{0}.json".format(i)
+            json_name = json_name.zfill(11)
+            json_path = path_to_dir + "/" + json_name
             label_info.extend(building["building_info"]["Coarse Labels"])
         with open(json_path, 'w') as outfile:
             json.dump(label_info, outfile)

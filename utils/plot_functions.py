@@ -7,19 +7,25 @@ from os import path
 from Structure.Building import Building
 from Structure.Scene import Scene
 from PIL import Image
+import csv
 
-SHAPE = (1024, 1024)
+SHAPE = (128, 128)
 my_dpi = 128
 
 
-def plot_sample_img(scene, image_outpath, image_count):
-    noise = np.random.normal(255. / 2, 255. / 10, SHAPE)
+def plot_sample_img(scene, image_outpath, image_count, add_noise=True):
 
-    img = plt.figure(figsize=(1330 / my_dpi, 1330 / my_dpi), dpi=my_dpi, frameon=False)
+    img = plt.figure(figsize=(167 / my_dpi, 167 / my_dpi), dpi=my_dpi, frameon=False)
     axes = plt.gca()
-    axes.imshow(noise, extent=[-1024, 1024, -1024, 1024])
-    axes.set_xlim([0, 1024])
-    axes.set_ylim([0, 1024])
+
+    if add_noise:
+        noise = np.random.normal(255. / 2, 255. / 10, SHAPE)
+    else:
+        noise = np.full(SHAPE, 255)
+
+    axes.imshow(noise, extent=[-200, 200, -200, 200])
+    axes.set_xlim([0, 128])
+    axes.set_ylim([0, 128])
     axes.axis('off')
 
     for structure in scene.buildings:
@@ -42,7 +48,9 @@ def plot_sample_img(scene, image_outpath, image_count):
         plt.grid(b=None)
         plt.box(False)
 
-    img.savefig(path.join(image_outpath, "{0}.png".format(image_count)), bbox_inches='tight', pad_inches=0)
+    name = "{0}.png".format(image_count)
+    name = name.zfill(10)
+    img.savefig(path.join(image_outpath, name), bbox_inches='tight', pad_inches=0)
     plt.close()
 
 
@@ -53,13 +61,13 @@ def fill_scene(max_shape_count: int, scene: Scene, json) -> None:
     failed = 0
 
     while failed < 10 and generated < max_shape_count:
-        x = random.uniform(256, 768)
-        y = random.uniform(256, 768)
-        w = random.uniform(60, 160)
-        h = random.uniform(60, 160)
+        x = random.uniform(24, 104)
+        y = random.uniform(24, 104)
+        w = random.uniform(8, 20)
+        h = random.uniform(8, 20)
         angle = random.uniform(0, 360)
         shape = Building(x, y, w, h, angle, generated)
-        offset = np.array((random.uniform(0, w / 4), random.uniform(0, h / 4)))
+        offset = np.array((random.uniform(0, w / 8), random.uniform(0, h / 8)))
         shape.offset_center(offset)
 
         if scene.has_overlap(shape):
@@ -99,21 +107,28 @@ def get_edges(data_dictionary):
     cx = data_dictionary["X"][-1]
     cy = data_dictionary["Y"][-1]
 
-    center = np.array((cx, cy))
+    center = np.array([cx, cy])
 
     for i in range(0, len(x_list) - 1):
-        anchor = np.array((x_list[i], y_list[i]))
+        anchor = np.array([x_list[i], y_list[i]])
+
         if i == 0:
             to_prev = len(x_list) - 2
             to_next = i + 1
         elif i == len(x_list) - 2:
             to_prev = i - 1
             to_next = 0
+        else:
+            to_prev = i - 1
+            to_next = i + 1
 
         edge_to_center = (center - anchor)
         edge_to_prev = (np.array((x_list[to_prev], y_list[to_prev])) - anchor)
         edge_to_next = (np.array((x_list[to_next], y_list[to_next])) - anchor)
 
+        print(edge_to_prev)
+        print(edge_to_center)
+        print(edge_to_next)
         edge_to_center = np.arctan2(edge_to_center[1], edge_to_center[0])
         edge_to_prev = np.arctan2(edge_to_prev[1], edge_to_prev[0])
         edge_to_next = np.arctan2(edge_to_next[1], edge_to_next[0])
@@ -190,32 +205,30 @@ def get_octant(angle) -> int:
 
 def plot_ground_truth(scene, image_outpath, image_count):
 
-    truth = plt.figure(frameon=False)
-    DPI = truth.get_dpi()
-    truth.set_size_inches(1024.0 / float(DPI), 1024.0 / float(DPI))
 
-    for structure in scene.buildings:
-        x, y = structure.vertices[0], structure.vertices[1]
-        plt.plot(x, y, 'o', color='black')
-        plt.plot(structure.center[0], structure.center[1], 'o', color='black')
-
+    img = plt.figure(figsize=(260 / my_dpi, 260 / my_dpi), dpi=my_dpi, frameon=False)
     axes = plt.gca()
-    axes.set_xlim([0, 1024])
-    axes.set_ylim([0, 1024])
+
+    noise = np.full((200, 200), 0)
+
+    axes.imshow(noise, extent=[-200, 200, -200, 200])
+    axes.set_xlim([0, 200])
+    axes.set_ylim([0, 200])
     axes.axis('off')
 
-    # Clear grid
-    plt.axis('off')
-    plt.grid(b=None)
-    plt.box(False)
+    for structure in scene.buildings:
+        img_matrix = structure.vertices
+        a, b, c, d = img_matrix[:, 0], img_matrix[:, 1], img_matrix[:, 2], img_matrix[:, 3]
+        shape = np.array([a, b, c, d])
 
-    truth.savefig(path.join(image_outpath, "image_{0}.png".format(image_count)), bbox_inches='tight', pad_inches=0)
+        plt.fill(shape[:, 0], shape[:, 1], "r")
 
-    #buf = io.BytesIO()
-    #truth.savefig(buf, format='png')
-    #buf.seek(0)
-    #im = Image.open(buf)
-    #im.savefig
-    #buf.close()
+        # Clear grid
+        plt.axis('off')
+        plt.grid(b=None)
+        plt.box(False)
 
+    name = "{0}.png".format(image_count)
+    name.zfill(5)
+    img.savefig(path.join(image_outpath, name), bbox_inches='tight', pad_inches=0)
     plt.close()
